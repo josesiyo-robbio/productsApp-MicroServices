@@ -1,0 +1,57 @@
+
+
+
+services:
+  nats-server:
+    image:  nats:latest
+    ports:
+      - "8222:8222"
+
+  client-gateway:
+    build: ./gateway_MS_NESTJS
+    ports:
+      - ${CLIENT_GATEWAY_PORT}:3000
+    volumes:
+      - ./gateway_MS_NESTJS/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+  
+  
+  products-ms: 
+    build: ./products_MS_NESTJS
+    volumes:
+      - ./products_MS_NESTJS/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3001
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+
+
+  #orders micro service
+  orders-ms:
+    depends_on:
+      - orders-db
+    build: ./orders_ms_nestjs
+    volumes:
+      - ./orders_ms_nestjs/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://postgres:sasha88@orders-db:5432/ordersdb?schema=public
+      - NATS_SERVERS=nats://nats-server:4222
+
+  orders-db:
+    container_name: orders_database
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - ./orders_ms_nestjs/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=sasha88
+      - POSTGRES_DB=ordersdb
