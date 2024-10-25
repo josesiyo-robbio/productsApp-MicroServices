@@ -7,3 +7,6 @@
 [submodule "orders_ms_nestjs"]
 	path = orders_ms_nestjs
 	url = https://github.com/josesiyo-robbio/orders_ms_nestjs.git
+[submodule "payments_ms_nestjs"]
+	path = payments_ms_nestjs
+	url = https://github.com/josesiyo-robbio/payments_ms_nestjs.git
