@@ -1,0 +1,71 @@
+
+
+
+services:
+  nats-server:
+    image:  nats:latest
+
+  client-gateway:
+    build: 
+      context: ./gateway_MS_NESTJS
+      dockerfile: dockerfile.prod
+    image: client-gateway-prod
+    ports:
+    - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
+
+
+
+  products-ms: 
+    build: 
+      context: ./products_MS_NESTJS
+      dockerfile: dockerfile.prod
+    image: products-microservice
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+
+
+  #orders micro service
+  orders-ms:
+    build: 
+      context: ./orders_ms_nestjs
+      dockerfile: dockerfile.prod
+      args:
+        - ORDERS_DATABASE_URL=${ORDERS_DATABASE_URL}
+    image: orders-microservice
+    environment:
+      - PORT=3002
+      - DATABASE_URL=${ORDERS_DATABASE_URL}
+      - NATS_SERVERS=nats://nats-server:4222
+
+
+  #Payments Microservice
+  payments-ms:
+    container_name: payments-ms
+    build: 
+      context: ./payments_ms_nestjs
+      dockerfile: dockerfile.prod
+    image: payments-microservice
+    ports:
+      - ${PAYMENTS_MS_PORT}:${PAYMENTS_MS_PORT}
+    environment:
+      - PORT=${PAYMENTS_MS_PORT}
+      - NATS_SERVERS=nats://nats-server:4222
+      - STRIPE_SECRET=${STRIPE_SECRET}
+      - STRIPE_SUCCESS_URL=${STRIPE_SUCCESS_URL}
+      - STRIPE_CANCEL_URL=${STRIPE_CANCEL_URL}
+      - STRIPE_ENDPOINT_SECRET=${STRIPE_ENDPOINT_SECRET}
+  
+  #AUTH Microservice
+  auth-ms:
+    build:
+      context: ./auth_ms_nestjs
+      dockerfile: dockerfile.prod
+    image: auth-microservice
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${AUTH_DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      
